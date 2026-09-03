@@ -266,6 +266,7 @@ sendVerificationEmail : async({user, url}) =>{
   },
   
   account:{
+     identityStrategy: "provider-id",
     accountLinking : {
       enabled : true,
       trustedProviders: ["google"]
