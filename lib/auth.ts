@@ -7,6 +7,7 @@ import { nextCookies } from "better-auth/next-js";
 import { sendEmail } from "./resend";
 
 export const auth = betterAuth({
+  baseURL: env.BETTER_AUTH_URL,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
