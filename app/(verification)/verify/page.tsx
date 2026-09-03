@@ -44,9 +44,7 @@ export default async function page() {
          <h1 className='text-muted-foreground lg:font-semibold lg:text- text-center'>
           We have sent a verification link to your email address. Please check your inbox and click on the link to verify your email.
          </h1>
-       <ResendVerification email={session.user.email}>
-  Success
-</ResendVerification>;
+       <ResendVerification email={session.user.email} />
          </div>
   </div>
   
