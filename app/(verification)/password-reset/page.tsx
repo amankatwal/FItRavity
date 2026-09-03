@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { SuccessButton } from '@/components/ui/SuccessButton'
 import { CheckCheck, KeyRound, Loader, Send } from 'lucide-react'
 import { unauthorized, useRouter, useSearchParams } from 'next/navigation'
+import React from 'react'
 import { useState } from 'react'
 
 export default function PasswordReset() {
@@ -14,9 +15,15 @@ export default function PasswordReset() {
     const router = useRouter();
     const [formdata, setFormData] = useState({ password: '', confirmPassword: '' })
     const {passwordReset, verificationLoader, verificationSuccess, route} = useAuthStore();
+     React.useEffect(() => {
     if (!token || token === "EXPIRED") {
-        unauthorized()
+      router.replace("/login")
     }
+  }, [token, router])
+
+  if (!token || token === "EXPIRED") {
+    return null
+  }
   return (
     <div>
       <div className = "w-full bg-card h-[7vh] flex font-bold lg:text-4xl text-2xl items-center py-5 px-10">
