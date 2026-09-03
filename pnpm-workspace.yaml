@@ -4,5 +4,3 @@ allowBuilds:
   prisma: false
   sharp: false
   unrs-resolver: false
-minimumReleaseAgeExclude:
-  - '@hugeicons/react@1.1.9'
