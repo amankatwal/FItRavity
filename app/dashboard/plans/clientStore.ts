@@ -2,6 +2,8 @@ import axios from "axios";
 import { create } from "zustand";
 import { toast } from "sonner";
 import {
+  createPlanVectorAction,
+  deactivatePlanAction,
   deleteFileAction,
   fetchPlansByOrgIdAction,
   getPlanByIdAction,
@@ -102,6 +104,8 @@ updatePlanInfoByID: (userId:string, planId:string, data: editPlanInfoSchemaType)
  updatePlanFeatures: (userId:string, planId:string, feature:string, value:boolean) => Promise<void>
  updatePlanOverview: (userId:string, planId:string, data: editPlanOverviewSchemaType) => Promise<void>
  updatePlanDurationBreakdown: (userId:string, planId:string, data: editPlanDurationBreakdownSchemaType) => Promise<void>
+ deactivatePlan : (userId:string,planId:string) => void
+ createVectorPlan: (planId:string,userId:string) => void
   uploadThumbnail: (
     file: File,
     userId: string
@@ -113,6 +117,7 @@ updatePlanInfoByID: (userId:string, planId:string, data: editPlanInfoSchemaType)
   submitPlan : (data: addPlanType, userId:string)=> void
   submitPlanLoader: boolean
   updatePlanLoader: boolean
+  planActivationLoader:boolean
 };
 
 export const useProgramForm = create<ProgramForm>((set) => ({
@@ -127,6 +132,7 @@ export const useProgramForm = create<ProgramForm>((set) => ({
   },
 submitPlanLoader: false, 
 updatePlanLoader: false,
+planActivationLoader: false,
   fetchPlansByOrgId: async (userId) => {
     try {
       const res = await fetchPlansByOrgIdAction(userId);
@@ -418,5 +424,47 @@ updatePlanLoader: false,
     }finally{
       set({updatePlanLoader: false})
     }
+  },
+  deactivatePlan : async(userId,planId) =>{
+    set({planActivationLoader:true})
+  if(!planId || ! userId){
+    toast.error("Invalid Request")
+  }
+  try {
+  const res = await deactivatePlanAction(userId, planId)
+         if(res?.success === false || res === undefined){
+          toast.error(res?.message)
+          return
+         }
+         if(res.data){
+     toast.success(res.message)
+    set((state)=>({plan: res.data
+        }))
+  }} catch (err) {
+    console.log(err)
+  }finally{
+    set({planActivationLoader:false})
+  }
+  },
+  createVectorPlan : async(userId, planId)=>{
+     set({planActivationLoader:true})
+  if(!planId || ! userId){
+    toast.error("Invalid Request")
+  }
+  try {
+  const res = await createPlanVectorAction(userId, planId)
+         if(res?.success === false || res === undefined){
+          toast.error(res?.message)
+          return
+         }
+         if(res.data){
+     toast.success(res.message)
+    set((state)=>({plan: res.data
+        }))
+  }} catch (err) {
+    console.log(err)
+  }finally{
+    set({planActivationLoader:false})
+  }
   }
 }));

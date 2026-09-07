@@ -206,7 +206,7 @@ model Plan {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   name        String
-  description String? @db.Text
+  description String @db.Text
 
   actualPrice      Int
   offerPrice       Int
@@ -239,9 +239,25 @@ model Plan {
   isActive         Boolean  @default(true)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  updatedAt DateTime 
+  vector      PlanVector[]
   @@index([organizationId])
   @@unique([organizationId, name])
   @@map("plan")
+}
+
+model PlanVector {
+  id         String   @id @default(cuid())
+  planId     String
+  content    String   @db.Text
+  chunkIndex Int
+  embedding  Unsupported("vector(1536)")
+  createdAt  DateTime @default(now())
+
+  plan Plan @relation(fields: [planId],references: [id],  onDelete: Cascade)
+
+  @@index([planId])
+  @@unique([planId, chunkIndex])
+
+  @@map("plan_vector")
 }

@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma"
 import { toast } from "sonner"
 import { success } from "zod"
 import { editPlanDurationBreakdownSchemaType, editPlanInfoSchemaType, editPlanNameSchemaType, editPlanOverviewSchemaType } from "./[planId]/__components/editPlanSchema"
+import { createPlanChunks, generatePlanEmbedding } from "@/lib/openAI"
+import { randomUUID } from "crypto"
 
 
 export const fetchPlansByOrgIdAction =async(userId: string)=>{
@@ -141,10 +143,22 @@ export const submitPlanAction = async(data:addPlanType, userId:string)=>{
                 programType:data.programType,
                 recomendedFor:data.recomendedFor,
                 restDays:data.restDays,
-                isActive:false,
+                isActive:true,
+                updatedAt:new Date()
             }
         })
-  if(!planRes){
+   const vectorResults = []
+    const chunks = await createPlanChunks(data, planRes.isActive, planRes.id)
+    for (let i=0; i < chunks.length; i++){
+const embedding = await generatePlanEmbedding(chunks[i])
+    const vectorString = `[${embedding.join(",")}]`;
+    const vectorId = randomUUID();
+  const vectorRes =  await prisma.$executeRaw`INSERT INTO plan_vector ("id","planId","content", "embedding", "chunkIndex") VALUES (${vectorId}, ${planRes.id}, ${chunks[i]}, ${vectorString}, ${i+1})`
+   vectorResults.push(vectorRes) 
+}
+    
+
+  if(!planRes || vectorResults.length === 0){
     return {success: false, message: "Invalid Request"}
   }
   return {success: true, message: "New Plan created Successfully", data: planRes}
@@ -204,6 +218,7 @@ export const updatePlanNameAction = async(userId:string, planId:string, data: ed
                 offerPrice: Number(data.offerPrice),
                 duration: Number(data.duration),
                 currency: data.currency,
+                isActive:false,
             }
         })
         return {success: true, message: "Plan name updated successfully", data: res}
@@ -211,6 +226,7 @@ export const updatePlanNameAction = async(userId:string, planId:string, data: ed
         return {success: false, message: "Something went wrong"}
     }
 }
+
 export const updatePlanInfoAction = async(userId:string, planId:string, data: editPlanInfoSchemaType)=>{
     if(!planId){
         return {success: false, message:"Something went wrong."}
@@ -234,6 +250,7 @@ try {
             data:{
                 description: data.description,
                 achievements:data.achievements.map((item) => item.value),
+                isActive:false,
             }
         })
         return {success: true, message: "Plan info updated successfully", data: res}
@@ -262,7 +279,8 @@ export const updatePlanFeaturesAction = async(userId:string, planId:string,featu
                 id: planId  
             },
             data: {
-                [feature]: value
+                [feature]: value,
+                isActive:false,
             }
             }
         )
@@ -296,7 +314,8 @@ export const updatePlanOverviewAction = async(userId:string, planId:string, data
                 programStructure: data.programStructure,
                 programType: data.programType,
                 recomendedFor: data.recomendedFor,
-                focusArea: data.focusArea
+                focusArea: data.focusArea,
+                isActive:false,
             }
         })
         return {success: true, message: "Plan overview updated successfully", data: res}
@@ -330,11 +349,88 @@ export const updatePlanDurationBreakdownAction = async(userId:string, planId:str
                 duration2: data.duration2,
                 duration2Info: data.duration2Info,
                 duration3: data.duration3,
-                duration3Info: data.duration3Info
+                duration3Info: data.duration3Info,
+                isActive:false,
             }
         })
         return {success: true, message: "Plan duration breakdown updated successfully", data: res}
     } catch (err) {
         return {success: false, message: "Something went wrong"}
+    }
+}
+export const deactivatePlanAction = async(userId:string,planId:string) =>{
+    if(!planId){
+        return{success: false, message: "Invalid Request"}
+    }
+    const  idRes = await prisma.organization.findFirst({
+        where:{
+            ownerId: userId,
+        }
+    })
+    if(!idRes?.id){
+        return { success: false, message: "Session error. PLease logout and login again"}
+    } 
+    if(idRes.ownerId !== userId){
+        return {success: false, message: "You are not authorized to update this plan"}
+    } 
+    try {
+    const res=await prisma.plan.update({
+            where : {
+                id: planId
+            },
+            data: {
+                isActive : false
+            }
+        })
+        await prisma.$executeRaw`DELETE FROM plan_vector WHERE "planId" = ${planId} `
+        return {success: true, message: "Plan deactivated Temporarily", data:res}
+    } catch (err) {
+        
+    }
+}
+
+export const createPlanVectorAction = async(userId:string, planId:string)=>{
+if(!planId){
+        return{success: false, message: "Invalid Request"}
+    }
+    const  idRes = await prisma.organization.findFirst({
+        where:{
+            ownerId: userId,
+        }
+    })
+    if(!idRes?.id){
+        return { success: false, message: "Session error. PLease logout and login again"}
+    } 
+    if(idRes.ownerId !== userId){
+        return {success: false, message: "You are not authorized to update this plan"}
+    } 
+    try {
+const planRes = await prisma.plan.update({
+                where: {
+                    id: planId
+                },
+                data: {
+                    isActive: true,
+                    updatedAt: new Date()
+                }
+            })
+            await prisma.$executeRaw`DELETE FROM plan_vector WHERE "planId" = ${planId}`
+        if(planRes){
+            
+        const vectorResults = []
+    const chunks = await createPlanChunks(planRes, planRes.isActive, planRes.id)
+    for (let i=0; i < chunks.length; i++){
+const embedding = await generatePlanEmbedding(chunks[i])
+    const vectorString = `[${embedding.join(",")}]`;
+    const vectorId = randomUUID();
+  const vectorRes =  await prisma.$executeRaw`INSERT INTO plan_vector ("id","planId","content", "embedding", "chunkIndex") VALUES (${vectorId}, ${planRes.id}, ${chunks[i]}, ${vectorString}, ${i+1})`
+   vectorResults.push(vectorRes) }
+   return {
+    success: true, message: "Data published successfully", data: planRes
+   }
+    } }catch (err) {
+        return{
+            success:false, message: "Invalid Request"
+        }
     }
 }

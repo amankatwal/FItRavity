@@ -5,13 +5,14 @@ import { BookOpenText, GitBranch,
   Clock3,
   UsersRound,
   Target,
-  Route, CalendarDays, ChartBarBig, ChartNoAxesCombined, ChevronRight, CircleCheck, Clock, Dumbbell, Pencil, Salad, Send, Toolbox, Video } from 'lucide-react'
+  Route, CalendarDays, ChartBarBig, ChartNoAxesCombined, ChevronRight, CircleCheck, Clock, Dumbbell,  Salad, Send, Toolbox, Video, 
+  Loader} from 'lucide-react'
 import Link from 'next/link'
 import { useProgramForm } from '../../clientStore'
-import { GoGoal } from "react-icons/go";
+import { GoAlertFill, GoGoal } from "react-icons/go";
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
-import { MdVerified } from "react-icons/md";
+import {  MdVerified } from "react-icons/md";
 import { authClient } from '@/lib/auth-client'
 import { AnimatedButton } from '@/components/ui/AnimatedButton'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -23,10 +24,12 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { EditPlanOverviewdialog } from './EditPlanOverviewdialog'
 import { EditPlanDurationBreakdownDialog } from './EditPlanDurationBreakdownDialog'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { FaCheckCircle } from 'react-icons/fa'
+import { Button } from '@/components/ui/button'
 export default function PlanInfo({planId}: {planId:string}) {
      const {data:session} = authClient.useSession()
-     const [openEditName, setOpenEditName]= React.useState(false)
-    const {plan,data, fetchPlanById, fetchPlansByOrgId, updatePlanFeatures, updatePlanLoader} = useProgramForm()
+    const {plan,data, fetchPlanById, fetchPlansByOrgId, updatePlanFeatures, updatePlanLoader, deactivatePlan,planActivationLoader, createVectorPlan} = useProgramForm()
     useEffect(()=>{
         if(session?.user)
             fetchPlansByOrgId(session?.user.id)
@@ -321,6 +324,48 @@ export default function PlanInfo({planId}: {planId:string}) {
            <CardFooter>
             <CardDescription>
              This special perk will allow you to have the conversation via video meeting to the Trainer where your trainer may get to know even better and give you exclusivity and will elevate your training experience. However The  timings and dates may vary.
+            </CardDescription>
+           </CardFooter>
+          </Card>
+           <Card>
+          
+           <CardHeader className='flex flex-col justify-center gap-3'>
+            
+            <CardTitle className='w-full flex justify-between'>Plan Status : {plan?.isActive ?  <Badge className="border-none bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 focus-visible:outline-none dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40">
+      <span
+        className="size-2 rounded-full bg-green-600 dark:bg-green-400"
+        aria-hidden="true"
+      />
+      Active
+    </Badge> :
+    <Badge className="bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive border-none focus-visible:outline-none">
+      <span className="bg-destructive size-2 rounded-full" aria-hidden="true" />
+      Not published
+    </Badge>
+    
+    }
+    
+    </CardTitle>
+    <div>
+      <Alert
+      variant="destructive"
+      className="border-destructive bg-destructive/5 mt-5"
+    >
+      <GoAlertFill className="size-4" />
+      <AlertTitle>A trainer can activate only one plan per day.</AlertTitle>
+    </Alert>
+    </div>
+           </CardHeader>
+           <CardFooter>
+             
+            <CardDescription className='w-full flex justify-center'>
+             {plan?.isActive ? <div >
+              {planActivationLoader ?<Button>Deactivating...<Loader className='animate-spin'/></Button>: 
+              
+              <AnimatedButton variant="destructive" onClick={()=>session?.user.id && deactivatePlan(session?.user.id, plan.id)}>Deactivate temporarily</AnimatedButton> }
+             </div>: <div>
+              {planActivationLoader ? <Button>Publishing...<Loader className='animate-spin'/></Button> : 
+              <AnimatedButton onClick={()=>session?.user.id && plan && createVectorPlan(session?.user.id, plan.id)}>Publish</AnimatedButton>}</div>}
             </CardDescription>
            </CardFooter>
           </Card>
