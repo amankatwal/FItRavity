@@ -107,28 +107,20 @@ export const LoginForm = () => {
                 <div>
                   
                 </div>
-<div className='w-full grid lg:grid-cols-3 grid-cols-2 place-items-center gap-5'>
-  <div>
-  <AnimatedButton size="sm"  className='bg-blue-600 text-amber-50 hover:cursor-pointer' variant="outline">
-                <FaFacebookF className='size-4'/>
-                Facebook
-               </AnimatedButton></div>
+<div className='w-full grid flex justify-center gap-5'>
+ 
                <div>
                {
                 googleLoader ? <AnimatedButton size="lg" className='  hover:cursor-wait' variant="secondary">
                 <Spinner />
                 Loading
                </AnimatedButton> :
-               <AnimatedButton size="lg" className='bg-card hover:cursor-pointer hover:text-card text-card-foreground' variant="secondary" onClick={()=>signInWithGoogle()}>
+               <AnimatedButton size="lg" className='bg-card hover:cursor-pointer hover:text-card text-card-foreground' variant="outline" onClick={()=>signInWithGoogle()}>
                 <FcGoogle className='size-4'/>
-                Google
+                Continue with Google
                </AnimatedButton>
                }</div>
-                <div className="lg:col-span-1 col-span-2">
-               <AnimatedButton size="lg" className='bg-card-foreground text-card hover:cursor-pointer' variant="secondary">
-                <SiApple className='size-4'/>
-                Apple
-               </AnimatedButton></div>
+                
 </div>
 <div className='flex justify-center items-center ga'>
   <h1 className="text-sm font-semibold">NEW HERE ?</h1> <Link href="/signup"> <Button variant="link" className='text-chart-4 hover:cursor-pointer'>Sign up</Button></Link>

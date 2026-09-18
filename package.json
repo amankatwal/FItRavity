@@ -30,6 +30,7 @@
     "@t3-oss/env-nextjs": "^0.13.11",
     "@tabler/icons-react": "^3.44.0",
     "@tanstack/react-table": "^9.1.2",
+    "@upstash/redis": "^1.38.4",
     "ai": "^7.0.91",
     "axios": "^1.19.0",
     "better-auth": "^1.6.19",

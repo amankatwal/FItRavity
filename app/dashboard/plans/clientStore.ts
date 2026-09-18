@@ -5,6 +5,7 @@ import {
   createPlanVectorAction,
   deactivatePlanAction,
   deleteFileAction,
+  deletePlanFileAction,
   fetchPlansByOrgIdAction,
   getPlanByIdAction,
   submitPlanAction,
@@ -14,6 +15,7 @@ import {
   updatePlanNameAction,
   updatePlanOverviewAction,
   uploadFileAction,
+  uploadPlanFileAction,
 } from "./actions";
 import { addPlanType } from "@/lib/formSchema";
 import { MemberRole } from "@/lib/generated/prisma/enums";
@@ -25,6 +27,7 @@ export type Plan = {
   duration: number;
   shortInfo:string;
   description: string | null;
+  planThumbnail : string | null;
   createdAt: Date;
   updatedAt: Date;
   organizationId: string;
@@ -73,6 +76,7 @@ export type Organization = {
   name: string;
   metadata: string | null;
   createdAt: Date;
+  
   slug: string;
   logo: string | null;
   curatorName?: string
@@ -93,20 +97,26 @@ type ProgramForm = {
   data: Organization | null;
   plan : Plan | null
   thumbnail: ThumbnailFile;
-  
+  planThumbnail : ThumbnailFile;
   fetchPlanById : (planId: string) => void
 
   fetchPlansByOrgId: (userId: string) => Promise<void>;
 
   setThumbnail: (thumbnail: ThumbnailFile) => void;
+  setPlanThumbnail : (thumbnail: ThumbnailFile) => void;
 updatePlanNameByID: (userId:string, planId:string, data: editPlanNameSchemaType) => Promise<void>
 updatePlanInfoByID: (userId:string, planId:string, data: editPlanInfoSchemaType) => Promise<void>
  updatePlanFeatures: (userId:string, planId:string, feature:string, value:boolean) => Promise<void>
  updatePlanOverview: (userId:string, planId:string, data: editPlanOverviewSchemaType) => Promise<void>
  updatePlanDurationBreakdown: (userId:string, planId:string, data: editPlanDurationBreakdownSchemaType) => Promise<void>
+ deletePlanThumbnail:(key:string)=> void
  deactivatePlan : (userId:string,planId:string) => void
  createVectorPlan: (planId:string,userId:string) => void
   uploadThumbnail: (
+    file: File,
+    userId: string
+  ) => Promise<string | null>;
+  uploadPlanThumbnail: (
     file: File,
     userId: string
   ) => Promise<string | null>;
@@ -118,6 +128,8 @@ updatePlanInfoByID: (userId:string, planId:string, data: editPlanInfoSchemaType)
   submitPlanLoader: boolean
   updatePlanLoader: boolean
   planActivationLoader:boolean
+  planLoader:Boolean,
+  orgLoader: Boolean,
 };
 
 export const useProgramForm = create<ProgramForm>((set) => ({
@@ -130,10 +142,20 @@ export const useProgramForm = create<ProgramForm>((set) => ({
     objectURL: "",
     
   },
+  planThumbnail: {
+    file: null,
+    uploading: false,
+    isDeleting: false,
+    objectURL: "",
+    
+  },
 submitPlanLoader: false, 
 updatePlanLoader: false,
 planActivationLoader: false,
+planLoader:false,
+orgLoader:false,
   fetchPlansByOrgId: async (userId) => {
+    set({orgLoader:true})
     try {
       const res = await fetchPlansByOrgIdAction(userId);
       set({
@@ -141,6 +163,8 @@ planActivationLoader: false,
       });
     } catch (err) {
       console.log(err);
+    }finally{
+      set({orgLoader:false})
     }
   },
 
@@ -304,6 +328,7 @@ planActivationLoader: false,
    }
   },
   fetchPlanById: async(planId)=>{
+    set({planLoader:true})
     if(!planId){
       toast.error("Somthing went wrong")
     }
@@ -316,6 +341,8 @@ planActivationLoader: false,
       }
     } catch (err) {
       toast.error("Something went wrong")
+    }finally{
+      set({planLoader:false})
     }
   },
   updatePlanNameByID: async(userId, planId, data)=>{
@@ -466,5 +493,124 @@ planActivationLoader: false,
   }finally{
     set({planActivationLoader:false})
   }
-  }
+  },
+  setPlanThumbnail: (thumbnail) => {
+    set({
+      planThumbnail: thumbnail,
+    });
+  },
+  uploadPlanThumbnail : async (file, planId) => {
+    set((state) => ({
+      planThumbnail: {
+        ...state.planThumbnail,
+        uploading: true,
+      },
+    }));
+
+    const formData = new FormData();
+
+    formData.append("file", file);
+
+    try {
+      const res = await axios.post(
+        "/api/cloudinary/upload",
+        formData
+      );
+
+      const key = res.data.public_id;
+      await uploadPlanFileAction(key, planId);
+      set((state) => ({
+        planThumbnail: {
+          ...state.planThumbnail,
+          key,
+          uploading: false,
+        },
+
+        plan: state.plan
+          ? {
+              ...state.plan,
+              planThumbnail: key,
+            }
+          : state.plan,
+      }));
+
+      return key;
+
+    } catch (error) {
+      console.error(error);
+
+      set((state) => ({
+        planThumbnail: {
+          ...state.planThumbnail,
+          uploading: false,
+        },
+      }));
+
+      toast.error("Invalid Request");
+
+      return null;
+    }
+  },
+ deletePlanThumbnail: async (key) => {
+    set((state) => ({
+      planThumbnail: {
+        ...state.planThumbnail,
+        isDeleting: true,
+      },
+    }));
+
+    try {
+      await axios.delete("/api/cloudinary/delete", {
+        data: {
+          publicId: key,
+        },
+      });
+      const finalRes = await deletePlanFileAction(key);
+
+      if (!finalRes.success) {
+        set((state) => ({
+          planThumbnail: {
+            ...state.planThumbnail,
+            isDeleting: false,
+          },
+        }));
+
+        return false;
+      }
+      set({
+        planThumbnail: {
+          file: null,
+          uploading: false,
+          isDeleting: false,
+          objectURL: "",
+          key: undefined,
+        },
+
+        plan: useProgramForm.getState().plan
+          ? {
+              ...useProgramForm.getState().plan!,
+              planThumbnail: null,
+            }
+          : null,
+      });
+
+      toast.success(finalRes.message);
+
+      return true;
+
+    } catch (error) {
+      console.error(error);
+
+      set((state) => ({
+        planThumbnail: {
+          ...state.planThumbnail,
+          isDeleting: false,
+        },
+      }));
+
+      toast.error("Invalid Request");
+
+      return false;
+    }
+  },
 }));

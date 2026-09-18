@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     {
       protocol: "https",
       hostname: "res.cloudinary.com",
+      pathname: "/dwyvsmlx3/image/upload/**",
+    },
+    {
+      protocol: "https",
+      hostname: "lh3.googleusercontent.com",
     },
   ],
 },

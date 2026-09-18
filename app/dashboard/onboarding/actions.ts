@@ -2,10 +2,22 @@
 
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
+import { standardProtection } from "@/lib/security"
 import { headers } from "next/headers"
 
 export const fetchAllApplications=async(userId: string, email?:string)=>{
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
  try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
     if(email){
         const res= await prisma.trainerApplication.findMany({
             where: {
@@ -13,7 +25,7 @@ export const fetchAllApplications=async(userId: string, email?:string)=>{
             }
         })
         if(res){
-        return {success: true, message: "", data : res}
+        return {success: true, data : res}
         
     }else{
         return {success: false, message: "No Application Found"}
@@ -44,10 +56,18 @@ export const fetchAllApplications=async(userId: string, email?:string)=>{
 }
 
 export const selfAssign =async(appId:string)=>{
-try {
-    const session = await auth.api.getSession({
-        headers : await headers()
+const session = await auth.api.getSession({
+        headers: await headers()
     })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
     const userId = session?.user.id
     const res = await prisma.trainerApplication.update({
        where :{
@@ -61,7 +81,4 @@ try {
 } catch (err) {
     return {success: false, message: `Invalid Request`}
 }
-}
-const fetchApplicationByEmail = async() =>{
-
 }

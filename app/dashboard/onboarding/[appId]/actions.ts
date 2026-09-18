@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { Application } from "./clientStore";
 import { sendEmail } from "@/lib/resend";
 import { success } from "zod";
+import { standardProtection } from "@/lib/security";
 export const fetchApplicationByID = async(appId: string) =>{
     const session = await auth.api.getSession({
         headers: await headers()
@@ -112,7 +113,18 @@ export const approveApplicantAction = async(data: Application | null, note: stri
     if(data === null){
         return { success: false, message: "Invalid Request"}
     }
+   const session = await auth.api.getSession({
+           headers: await headers()
+       })
     try {
+       if(!session){
+            return {success: false, message: "Session Expired! Please login again"}
+       }else{
+       const decision = await standardProtection(session?.user.id)
+   if(decision.isDenied()){
+       return {success: false, message: "Request Blocked"}
+   }
+   }
         if(data.status === "APPROVED" || data.status === "REJECTED"){
             return {success: false, message: "Decision for this application have been taken please refresh the page"}
         }
@@ -246,7 +258,18 @@ export const rejectApplicationAction = async(data: Application | null, note: str
      if(data === null){
         return { success: false, message: "Invalid Request"}
     }
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         if(!data.adminComment){
             return {success: false, message: "Please send the verification Message to Applicant"}
         }

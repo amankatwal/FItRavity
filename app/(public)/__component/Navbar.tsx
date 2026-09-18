@@ -54,7 +54,7 @@ export const Navbar = () => {
             <ul className='flex gap-3  align-center justify-center w-full text-lg text-white font-semibold'>
                 <AnimatePresence>
                 <Link href="/"><motion.li variants={item} whileHover={{scale : 1.05}} whileTap={{ scale: 0.95 }} className={`${pathname === "/" && "text-primary"} px-4 py-1 hover:text-primary hover:cursor-pointer border-b-1 hover:border-primary border-b-transparent`}>Home</motion.li></Link>
-                <Link href="/"><motion.li variants={item} whileHover={{scale : 1.05}} whileTap={{ scale: 0.95 }} className={`${pathname === "/plans" && "text-primary"} px-4 py-1 hover:text-primary hover:cursor-pointer border-b-1 hover:border-primary border-b-transparent`}>Plans</motion.li></Link>
+                <Link href="/plans"><motion.li variants={item} whileHover={{scale : 1.05}} whileTap={{ scale: 0.95 }} className={`${pathname === "/plans" && "text-primary"} px-4 py-1 hover:text-primary hover:cursor-pointer border-b-1 hover:border-primary border-b-transparent`}>Training</motion.li></Link>
                <Link href="/"><motion.li variants={item} whileHover={{scale : 1.05}} whileTap={{ scale: 0.95 }} className={`${pathname === "/about" && "text-primary"} px-4 py-1 hover:text-primary hover:cursor-pointer border-b-1 hover:border-primary border-b-transparent`}>About</motion.li></Link>
                <Link href="/contact"><motion.li variants={item} whileHover={{scale : 1.05}} whileTap={{ scale: 0.95 }} className={`${pathname === "/contact" && "text-primary"} px-4 py-1 hover:text-primary hover:cursor-pointer border-b-1 hover:border-primary border-b-transparent`}>Contact Us</motion.li></Link>
 

@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/adminSidebar/app-sidebar"
 import { SiteHeader } from "@/components/adminSidebar/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import HomeLoader from "@/components/web/HomeLoader"
 import { authClient } from "@/lib/auth-client"
 import { forbidden, unauthorized } from "next/navigation"
 import { ReactNode } from "react"
@@ -10,7 +11,7 @@ import { ReactNode } from "react"
 export default function adminLayout({children} : {children : ReactNode}) {
   const {data : session, isPending} = authClient.useSession();
   if(isPending){
-    return null
+    return <HomeLoader />
   }
   if(!session){
     return unauthorized()

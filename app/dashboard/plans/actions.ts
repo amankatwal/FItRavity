@@ -6,13 +6,29 @@ import { success } from "zod"
 import { editPlanDurationBreakdownSchemaType, editPlanInfoSchemaType, editPlanNameSchemaType, editPlanOverviewSchemaType } from "./[planId]/__components/editPlanSchema"
 import { createPlanChunks, generatePlanEmbedding } from "@/lib/openAI"
 import { randomUUID } from "crypto"
+import { auth } from "@/lib/auth"
+import { headers } from "next/headers"
+import { standardProtection } from "@/lib/security"
+import { redis } from "@/lib/redis"
+import { Plan } from "./clientStore"
 
 
 export const fetchPlansByOrgIdAction =async(userId: string)=>{
     if(!userId){
         return {success: false, message: "Invalid Request PLease try again later"}
     }
-    try {
+  const session = await auth.api.getSession({
+          headers: await headers()
+      })
+   try {
+      if(!session){
+           return {success: false, message: "Session Expired! Please login again"}
+      }else{
+      const decision = await standardProtection(session?.user.id)
+  if(decision.isDenied()){
+      return {success: false, message: "Request Blocked"}
+  }
+  }
        
         const res= await prisma.organization.findFirst({
             where : {
@@ -65,7 +81,18 @@ export const uploadFileAction = async(key:string, userId: string)=>{
     if(!key){
         return {success: false, message: "Invalid request"}
     }
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res= await prisma.organization.update({
             where: {
                 ownerId: userId,
@@ -78,11 +105,53 @@ export const uploadFileAction = async(key:string, userId: string)=>{
      toast.error("Invalid Request")
     }
 }
+export const uploadPlanFileAction = async(key:string, planId: string)=>{
+    if(!key){
+        return {success: false, message: "Invalid request"}
+    }
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
+        const res= await prisma.plan.update({
+            where: {
+                id: planId,
+            },
+            data: {
+                planThumbnail:key,
+                isActive:false,
+            }
+        })
+        console.log(planId)
+        await redis.del(`PlanId:${planId}`)
+    } catch (err) {
+     console.log(err)
+    }
+}
 export const deleteFileAction = async(key: string) =>{
     if(!key){
         return {success: false, message: "Invalid Request"}
     }
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         await prisma.organization.update({
             where : {
                 logo: key,
@@ -96,11 +165,55 @@ export const deleteFileAction = async(key: string) =>{
         return {success: false, message: "Invalid request"}
     }
 }
+export const deletePlanFileAction = async(key: string) =>{
+    if(!key){
+        return {success: false, message: "Invalid Request"}
+    }
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
+     const res= await prisma.plan.update({
+            where : {
+                planThumbnail: key,
+            },
+            data: {
+                planThumbnail: null,
+                isActive:false,
+            }
+        })
+        await prisma.$executeRaw`DELETE FROM plan_vector WHERE "planId" = ${res.id} `
+         await redis.del(`PlanId:${res.id}`)
+
+        return {success: true, message: "Thumbanial deleted Successfully"}
+    } catch (err) {
+        return {success: false, message: "Invalid request"}
+    }
+}
 export const submitPlanAction = async(data:addPlanType, userId:string)=>{
     if(!data || !userId){
         return {success: false, message: "Invalid Request"}
     }
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res = await prisma.organization.findFirst({
             where :{
                 ownerId: userId,
@@ -143,22 +256,12 @@ export const submitPlanAction = async(data:addPlanType, userId:string)=>{
                 programType:data.programType,
                 recomendedFor:data.recomendedFor,
                 restDays:data.restDays,
-                isActive:true,
+                isActive:false,
                 updatedAt:new Date()
             }
         })
-   const vectorResults = []
-    const chunks = await createPlanChunks(data, planRes.isActive, planRes.id)
-    for (let i=0; i < chunks.length; i++){
-const embedding = await generatePlanEmbedding(chunks[i])
-    const vectorString = `[${embedding.join(",")}]`;
-    const vectorId = randomUUID();
-  const vectorRes =  await prisma.$executeRaw`INSERT INTO plan_vector ("id","planId","content", "embedding", "chunkIndex") VALUES (${vectorId}, ${planRes.id}, ${chunks[i]}, ${vectorString}, ${i+1})`
-   vectorResults.push(vectorRes) 
-}
-    
-
-  if(!planRes || vectorResults.length === 0){
+   
+  if(!planRes){
     return {success: false, message: "Invalid Request"}
   }
   return {success: true, message: "New Plan created Successfully", data: planRes}
@@ -170,7 +273,25 @@ export const getPlanByIdAction =async(planId:string)=>{
     if(!planId){
         return {success: false, message:"Something went wrong."}
     }
-try {
+const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
+const cacheKey = `PlanId:${planId}`
+     const cachedPlan = await redis.get<Plan>(cacheKey)
+     if(cachedPlan){
+       return{
+        success: true, data: cachedPlan
+    }
+     }
     const res = await prisma.plan.findUnique({
         where:{
             id:planId
@@ -179,6 +300,7 @@ try {
     if(!res){
         return {success: false, message: "Something went wrong"}
     }
+     await redis.set(cacheKey,res)
     return{
         success: true, data: res
     }
@@ -202,7 +324,18 @@ export const updatePlanNameAction = async(userId:string, planId:string, data: ed
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     }  
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res = await prisma.plan.update({
             where:{
                 id: planId
@@ -221,6 +354,7 @@ export const updatePlanNameAction = async(userId:string, planId:string, data: ed
                 isActive:false,
             }
         })
+        await redis.del(`PlanId:${planId}`)
         return {success: true, message: "Plan name updated successfully", data: res}
     } catch (err) {
         return {success: false, message: "Something went wrong"}
@@ -242,7 +376,18 @@ export const updatePlanInfoAction = async(userId:string, planId:string, data: ed
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     } 
-try {
+const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
     const res = await prisma.plan.update({
             where:{
                 id: planId
@@ -253,6 +398,7 @@ try {
                 isActive:false,
             }
         })
+        await redis.del(`PlanId:${planId}`)
         return {success: true, message: "Plan info updated successfully", data: res}
 } catch (err) {
     return {success: false, message: "Something went wrong"}
@@ -273,7 +419,18 @@ export const updatePlanFeaturesAction = async(userId:string, planId:string,featu
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     } 
-    try {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res = await prisma.plan.update({
             where:{
                 id: planId  
@@ -284,6 +441,7 @@ export const updatePlanFeaturesAction = async(userId:string, planId:string,featu
             }
             }
         )
+        await redis.del(`PlanId:${planId}`)
         return {success: true, message: "Plan features updated successfully", data: res}
     } catch (err) {
         console.log(err)
@@ -305,7 +463,18 @@ export const updatePlanOverviewAction = async(userId:string, planId:string, data
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     } 
-    try {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res= await prisma.plan.update({
             where:{
                 id: planId
@@ -318,6 +487,7 @@ export const updatePlanOverviewAction = async(userId:string, planId:string, data
                 isActive:false,
             }
         })
+        await redis.del(`PlanId:${planId}`)
         return {success: true, message: "Plan overview updated successfully", data: res}
     } catch (err) {
         return {success: false, message: "Something went wrong"}
@@ -338,7 +508,18 @@ export const updatePlanDurationBreakdownAction = async(userId:string, planId:str
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     } 
-    try {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res = await prisma.plan.update({
             where: {
                 id: planId
@@ -353,6 +534,7 @@ export const updatePlanDurationBreakdownAction = async(userId:string, planId:str
                 isActive:false,
             }
         })
+        await redis.del(`PlanId:${planId}`)
         return {success: true, message: "Plan duration breakdown updated successfully", data: res}
     } catch (err) {
         return {success: false, message: "Something went wrong"}
@@ -373,7 +555,18 @@ export const deactivatePlanAction = async(userId:string,planId:string) =>{
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     } 
-    try {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
     const res=await prisma.plan.update({
             where : {
                 id: planId
@@ -382,6 +575,7 @@ export const deactivatePlanAction = async(userId:string,planId:string) =>{
                 isActive : false
             }
         })
+        await redis.del(`PlanId:${planId}`)
         await prisma.$executeRaw`DELETE FROM plan_vector WHERE "planId" = ${planId} `
         return {success: true, message: "Plan deactivated Temporarily", data:res}
     } catch (err) {
@@ -404,7 +598,19 @@ if(!planId){
     if(idRes.ownerId !== userId){
         return {success: false, message: "You are not authorized to update this plan"}
     } 
-    try {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
+await redis.del(`PlanId:${planId}`)
 const planRes = await prisma.plan.update({
                 where: {
                     id: planId
@@ -415,8 +621,9 @@ const planRes = await prisma.plan.update({
                 }
             })
             await prisma.$executeRaw`DELETE FROM plan_vector WHERE "planId" = ${planId}`
+             await redis.del(`PlanId:${planId}`)
         if(planRes){
-            
+            await redis.set(`PlanId:${planId}`, planRes)
         const vectorResults = []
     const chunks = await createPlanChunks(planRes, planRes.isActive, planRes.id)
     for (let i=0; i < chunks.length; i++){

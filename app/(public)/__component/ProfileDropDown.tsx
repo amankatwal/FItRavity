@@ -24,7 +24,6 @@ export const ProfileDrowpDown =() => {
     const [signOutState, setSignOutState] = useState(false)
     const {data: session} = authClient.useSession();
     const {signOut} = useAuthStore();
-    console.log(session?.user.role)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

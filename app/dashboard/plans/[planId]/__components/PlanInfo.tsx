@@ -27,9 +27,10 @@ import { EditPlanDurationBreakdownDialog } from './EditPlanDurationBreakdownDial
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { FaCheckCircle } from 'react-icons/fa'
 import { Button } from '@/components/ui/button'
+import EditPlanThumbnailForm from './EditPlanThumbnailForm'
 export default function PlanInfo({planId}: {planId:string}) {
      const {data:session} = authClient.useSession()
-    const {plan,data, fetchPlanById, fetchPlansByOrgId, updatePlanFeatures, updatePlanLoader, deactivatePlan,planActivationLoader, createVectorPlan} = useProgramForm()
+    const {plan,data, fetchPlanById, fetchPlansByOrgId, updatePlanFeatures, updatePlanLoader, deactivatePlan,planActivationLoader, createVectorPlan, planLoader} = useProgramForm()
     useEffect(()=>{
         if(session?.user)
             fetchPlansByOrgId(session?.user.id)
@@ -40,7 +41,11 @@ export default function PlanInfo({planId}: {planId:string}) {
       if(session?.user && plan?.id)
       updatePlanFeatures(session?.user.id, plan?.id, feature, value)
     }
-  return (
+  return (<div>
+    {planLoader ? <div className='bg-card/10 w-full h-screen flex justify-center items-center'>
+        <h1 className='shimmer shimmer-color-primary text-primary/10 text-5xl font-semibold tracking-[0.5em] -rotate-3'>LOADING...</h1>
+        
+      </div> :
     <div><section className='px-10 py-10 flex gap-3 items-center  text-sm'>
       <Link href="/dashboard"><span className='text-muted-foreground hover:cursor-pointer hover:text-primary/50'> Dashboard </span></Link><span className='text-muted-foreground hover:cursor-pointer hover:text-primary/50'><ChevronRight size={15}/></span><Link href="/dashboard/plans"><span className='text-muted-foreground hover:cursor-pointer hover:text-primary/50'> Plan </span></Link>  <span><ChevronRight size={15}/></span><span>{plan?.name} </span>
     </section>
@@ -48,14 +53,10 @@ export default function PlanInfo({planId}: {planId:string}) {
         <section className='flex gap-10 px-20 py-10 relative'>
           <div className='absolute top-5 right-20'>
           <EditPlanNameDialog  /></div>
-            <div className='relative max-h-[400px]'>
-                <div className='w-full h-full bg-black/50 absolute z-10'>
-                 <Badge className={`absolute top-5 right-5 bg-[#C4A651]/60 px-2 py-1 text-black font-semibold`}>
-                    {plan?.duration} days
-                 </Badge>
-                </div>
-                <Image src={`https://res.cloudinary.com/dwyvsmlx3/image/upload/v1786440423/${data?.logo}`} width={300} height={100} alt='Plan Thumbnail' className='rounded-lg w-[600px] h-[400px] object-cover'/>
-            </div>
+               <div className='w-[80vh]'>
+                 <EditPlanThumbnailForm /></div>
+                
+            
             <span className='flex flex-col gap-5 w-full'>
                 <h1 className='text-3xl font-bold flex gap-3'>{plan?.name}</h1>
                
@@ -521,6 +522,8 @@ export default function PlanInfo({planId}: {planId:string}) {
     </div>
         </section>
       </div>
-    
+      
+}
+    </div>
   )
 }

@@ -34,11 +34,11 @@ model User {
   image              String?
   createdAt          DateTime
   updatedAt          DateTime
+  interests          String[]
   ownedOrganizations Organization[]      @relation("OrganizationOwner")
   trainerApplication TrainerApplication? @relation("TrainerApplicationApplicant")
 
   assignedApplications TrainerApplication[] @relation("TrainerApplicationAdmin")
-
   sessions    Session[]
   accounts    Account[]
   members     Member[]
@@ -207,7 +207,7 @@ model Plan {
 
   name        String
   description String @db.Text
-
+  planThumbnail        String?      @unique
   actualPrice      Int
   offerPrice       Int
   currency         String   @default("INR")

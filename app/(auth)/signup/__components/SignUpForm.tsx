@@ -16,8 +16,10 @@ import { useAuthStore } from "@/app/store/authStore";
 import { redirect, useRouter } from "next/navigation";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { Loader } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 export default function SignUpForm(){
   const [step,setStep] = useState(1);
+  const {googleLoader, signInWithGoogle, signInLoader, signInWithEmail} = useAuthStore();
   const [formData, setFormData] = useState({
     name : "",
     email : "",
@@ -122,16 +124,20 @@ signUpLoader ? <Button className = "disabled hover:cursor-progress" type="button
                 <div>
                   
                 </div>
-<div className='flex justify-around w-full mx-10'>
-  <Button size="icon-lg" className='bg-sky-700 text-amber-50 hover:cursor-pointer' variant="outline">
-                <FaFacebookF className='size-6'/>
-               </Button>
-               <Button size="icon-lg" className='bg-neutral-200' variant="outline">
-                <FcGoogle className='size-6'/>
-               </Button>
-               <Button size="icon-lg" className='bg-neutral' variant="outline">
-                <SiApple className='size-6'/>
-               </Button>
+<div className='w-full grid flex justify-center gap-5'>
+ 
+               <div>
+               {
+                googleLoader ? <AnimatedButton size="lg" className='  hover:cursor-wait' variant="secondary">
+                <Spinner />
+                Loading
+               </AnimatedButton> :
+               <AnimatedButton size="lg" className='bg-card hover:cursor-pointer hover:text-card text-card-foreground' variant="outline" onClick={()=>signInWithGoogle()}>
+                <FcGoogle className='size-4'/>
+                Continue with Google
+               </AnimatedButton>
+               }</div>
+                
 </div>
 <div className='flex justify-center items-center gap-3'>
   <h1 className="text-sm font-semibold">Already user?</h1> <Link href="/login"> <Button variant="link" className='text-chart-4 hover:cursor-pointer'>Log in</Button></Link>

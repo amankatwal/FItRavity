@@ -1,11 +1,25 @@
 "use server"
+import { auth } from "@/lib/auth"
 import { trainerSchema, trainerSchemaType } from "@/lib/formSchema"
 import prisma from "@/lib/prisma"
+import { standardProtection } from "@/lib/security"
+import { headers } from "next/headers"
 import { success } from "zod"
 
 
 export const onboardingStatus = async (userId : string) => {
-    try {
+    const session = await auth.api.getSession({
+            headers: await headers()
+        })
+     try {
+        if(!session){
+             return {success: false, message: "Session Expired! Please login again"}
+        }else{
+        const decision = await standardProtection(session?.user.id)
+    if(decision.isDenied()){
+        return {success: false, message: "Request Blocked"}
+    }
+    }
          const res = await prisma.trainerApplication.findMany({
     where : {
         userId : userId
@@ -25,7 +39,18 @@ export const submitApplication = async(data: trainerSchemaType, userId:string) =
     if(!validation.success){
         return { success: false, message: "Invalid Request" }
     }
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
             const res = await prisma.trainerApplication.findMany({
     where : {
         userId : userId
@@ -62,7 +87,18 @@ return {success: true, message: `Application id# ${submitRes.id} submitted`, app
 }
 
 export const checkAvailability = async(brand: string)=>{
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res = await prisma.organization.findFirst({
         where : {
            name: brand
@@ -79,7 +115,18 @@ export const checkAvailability = async(brand: string)=>{
     
 }
 export const verifyCode = async(code:string)=>{
-    try {
+   const session = await auth.api.getSession({
+        headers: await headers()
+    })
+ try {
+    if(!session){
+         return {success: false, message: "Session Expired! Please login again"}
+    }else{
+    const decision = await standardProtection(session?.user.id)
+if(decision.isDenied()){
+    return {success: false, message: "Request Blocked"}
+}
+}
         const res = await prisma.organization.findFirst({
               where : {
                 slug: code

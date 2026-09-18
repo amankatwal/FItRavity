@@ -40,11 +40,13 @@ export const useApplicationStore = create<OnboardingStatusResponse>()(persist((s
         set({pending: true})
         try {
           const res = await onboardingStatus(userId)  
-          if(res) {
+          if(res?.success === true) {
             set({success: true, applicationId: res.applicationId, applicationStatus: res.status})
+          }else{
+            toast.error(res?.message)
           }
         } catch (err) {
-            console.log(err)
+             toast.error("Invalid Request")
         }finally{
             set({pending: false})
         }
