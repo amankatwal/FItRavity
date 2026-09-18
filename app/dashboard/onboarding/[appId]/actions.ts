@@ -1,12 +1,10 @@
-"use server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { headers } from "next/headers"
 import { v4 as uuidv4 } from 'uuid';
 import crypto from "crypto";
-import { Application } from "./clientStore";
+import type { Application } from "./clientStore";
 import { sendEmail } from "@/lib/resend";
-import { success } from "zod";
 import { standardProtection } from "@/lib/security";
 export const fetchApplicationByID = async(appId: string) =>{
     const session = await auth.api.getSession({

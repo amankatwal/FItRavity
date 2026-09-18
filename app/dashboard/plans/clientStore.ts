@@ -1,22 +1,6 @@
 import axios from "axios";
 import { create } from "zustand";
 import { toast } from "sonner";
-import {
-  createPlanVectorAction,
-  deactivatePlanAction,
-  deleteFileAction,
-  deletePlanFileAction,
-  fetchPlansByOrgIdAction,
-  getPlanByIdAction,
-  submitPlanAction,
-  updatePlanDurationBreakdownAction,
-  updatePlanFeaturesAction,
-  updatePlanInfoAction,
-  updatePlanNameAction,
-  updatePlanOverviewAction,
-  uploadFileAction,
-  uploadPlanFileAction,
-} from "./actions";
 import { addPlanType } from "@/lib/formSchema";
 import { MemberRole } from "@/lib/generated/prisma/enums";
 import { editPlanDurationBreakdownSchemaType, editPlanInfoSchemaType, editPlanNameSchemaType, editPlanOverviewSchemaType } from "./[planId]/__components/editPlanSchema";
@@ -157,7 +141,7 @@ orgLoader:false,
   fetchPlansByOrgId: async (userId) => {
     set({orgLoader:true})
     try {
-      const res = await fetchPlansByOrgIdAction(userId);
+      const { data: res } = await axios.post<any>("/api/plans", { action: "fetch-by-owner", userId });
       set({
         data: res.data,
       });
@@ -193,7 +177,7 @@ orgLoader:false,
       );
 
       const key = res.data.public_id;
-      await uploadFileAction(key, userId);
+      await axios.post<any>("/api/plans", { action: "upload-logo", key, userId });
       set((state) => ({
         thumbnail: {
           ...state.thumbnail,
@@ -241,7 +225,7 @@ orgLoader:false,
           publicId: key,
         },
       });
-      const finalRes = await deleteFileAction(key);
+      const { data: finalRes } = await axios.post<any>("/api/plans", { action: "delete-logo", key });
 
       if (!finalRes.success) {
         set((state) => ({
@@ -306,7 +290,7 @@ orgLoader:false,
     toast.error("Client Invalid Request")
    }
    try {
-       const res = await submitPlanAction(data, userId)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "create", data, userId })
        if(res?.success === true){
         toast.success(res.message)
         if(res.data){
@@ -333,7 +317,7 @@ orgLoader:false,
       toast.error("Somthing went wrong")
     }
     try {
-      const res = await getPlanByIdAction(planId)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "get", planId })
       if(res.data ){
         set({plan:res.data})
       }else{
@@ -357,7 +341,7 @@ orgLoader:false,
       return
     }
     try {
-      const res = await updatePlanNameAction(userId, planId, data)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "update-name", userId, planId, data })
       if(res.success){
         toast.success(res.message)
         set((state)=>({plan: res.data
@@ -378,7 +362,7 @@ orgLoader:false,
       return
     }
     try {
-      const res = await updatePlanInfoAction(userId, planId, data)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "update-info", userId, planId, data })
       if(res.success){
         toast.success(res.message)
         set((state)=>({plan: res.data
@@ -395,7 +379,7 @@ orgLoader:false,
   updatePlanFeatures: async(userId, planId,feature, data)=>{
        set({updatePlanLoader: true})
     try {
-      const res = await updatePlanFeaturesAction(userId, planId, feature, data)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "update-features", userId, planId, feature, value: data })
       if(res.success){
         toast.success(res.message)
         set((state)=>({plan: res.data
@@ -417,7 +401,7 @@ orgLoader:false,
       return
     }
     try {
-      const res = await updatePlanOverviewAction(userId, planId, data)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "update-overview", userId, planId, data })
       if(res.success){
         toast.success(res.message)
         set((state)=>({plan: res.data
@@ -438,7 +422,7 @@ orgLoader:false,
       return
     }
     try {
-      const res = await updatePlanDurationBreakdownAction(userId, planId, data)
+      const { data: res } = await axios.post<any>("/api/plans", { action: "update-duration", userId, planId, data })
       if(res.success){
         toast.success(res.message)
         set((state)=>({plan: res.data
@@ -458,7 +442,7 @@ orgLoader:false,
     toast.error("Invalid Request")
   }
   try {
-  const res = await deactivatePlanAction(userId, planId)
+  const { data: res } = await axios.post<any>("/api/plans", { action: "deactivate", userId, planId })
          if(res?.success === false || res === undefined){
           toast.error(res?.message)
           return
@@ -479,7 +463,7 @@ orgLoader:false,
     toast.error("Invalid Request")
   }
   try {
-  const res = await createPlanVectorAction(userId, planId)
+  const { data: res } = await axios.post<any>("/api/plans", { action: "publish", userId, planId })
          if(res?.success === false || res === undefined){
           toast.error(res?.message)
           return
@@ -518,7 +502,7 @@ orgLoader:false,
       );
 
       const key = res.data.public_id;
-      await uploadPlanFileAction(key, planId);
+      await axios.post<any>("/api/plans", { action: "upload-plan-file", key, planId });
       set((state) => ({
         planThumbnail: {
           ...state.planThumbnail,
@@ -565,7 +549,7 @@ orgLoader:false,
           publicId: key,
         },
       });
-      const finalRes = await deletePlanFileAction(key);
+      const { data: finalRes } = await axios.post<any>("/api/plans", { action: "delete-plan-file", key });
 
       if (!finalRes.success) {
         set((state) => ({

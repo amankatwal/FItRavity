@@ -1,6 +1,6 @@
 import {create} from "zustand"
 import {toast} from "sonner"
-import { fetchInterestAction, fetchInterestRecomendationAction, fetchRecomendationAction, submitIntrestAction } from "./action"
+import axios from "axios"
 
 type RecommendedPlan = {
   id: string;
@@ -18,6 +18,15 @@ type RecommendedPlan = {
     }[];
   };
 }
+
+type InterestRecommendation = {
+  achievements: string[];
+  equipment: string;
+  focusArea: string;
+  goal: string;
+  name: string;
+  programType: string;
+};
 
 
 type PlanRenderStore = {
@@ -55,7 +64,7 @@ fetchInterestRecomendation: async(keyword)=>{
     return;
   }
 try {
-    const res = await fetchInterestRecomendationAction(keyword);
+    const { data: res } = await axios.post<{ data?: InterestRecommendation[] }>("/api/public-plans", { action: "interest-recommendations", keyword });
   console.log(res)
     const data =
       res?.data
@@ -87,7 +96,7 @@ if(interest.length === 0){
   toast.error("Empty values cannot be submitted")
 }
 try {
-  const res = await submitIntrestAction(interest)
+  const { data: res } = await axios.post<any>("/api/public-plans", { action: "save-interests", interests: interest })
   if(res.success === false){
     toast.error(res.message)
      return
@@ -104,7 +113,7 @@ try {
 fetchInterest : async()=>{
   try {
     set({fetchInterestLoader:true})
-    const res = await fetchInterestAction()
+    const { data: res } = await axios.post<any>("/api/public-plans", { action: "interests" })
     set({interests:res?.data?.interests})
   } catch (err) {
     console.log(err)
@@ -128,7 +137,7 @@ set((state)=>({interests: state.interests.filter((key)=> key !== value)}))
 fetchPlanRecomendation: async(userId)=>{
 set({recomendedPlanLoader: true})
 try {
-  const res = await fetchRecomendationAction(userId)
+  const { data: res } = await axios.post<any>("/api/public-plans", { action: "recommendations", userId })
   if(res.data){
     set({recomendedPlans: res.data})
   }

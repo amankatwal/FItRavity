@@ -1,6 +1,6 @@
 import {create} from "zustand";
-import { fetchAllApplications, selfAssign } from "./actions";
 import { toast } from "sonner";
+import axios from "axios";
 
 type Application={
     id: string;
@@ -46,7 +46,7 @@ export const useAdminApplicationStore = create<ApplicationController>((set, get)
        data: null,
        acceptLoader: false,
     fetchApplication : async(userId, email) =>{
-        const res = await fetchAllApplications(userId, email)
+        const { data: res } = await axios.post<any>("/api/admin/applications", { action: "list", userId, email })
         if(res){
              set({data: res.data})
              
@@ -58,7 +58,7 @@ export const useAdminApplicationStore = create<ApplicationController>((set, get)
     acceptAssignment : async(appId) =>{
       set({acceptLoader:true})
       try {
-        const res = await selfAssign(appId)
+        const { data: res } = await axios.post<any>("/api/admin/applications", { action: "assign", appId })
         if(res.success){
           toast.success(res.message)
         }else{

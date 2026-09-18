@@ -1,7 +1,7 @@
 "use client"
 import { toast } from "sonner";
+import axios from "axios";
 import { create } from "zustand";
-import { checkAvailability, onboardingStatus, submitApplication, verifyCode } from "../onboarding/onbording-form/actions";
 import { trainerSchemaType } from "@/lib/formSchema";
 import { persist, createJSONStorage } from 'zustand/middleware'
 
@@ -39,7 +39,7 @@ export const useApplicationStore = create<OnboardingStatusResponse>()(persist((s
     getUserApplication : async(userId)=>{
         set({pending: true})
         try {
-          const res = await onboardingStatus(userId)  
+          const { data: res } = await axios.post<any>("/api/onboarding", { action: "status", userId });
           if(res?.success === true) {
             set({success: true, applicationId: res.applicationId, applicationStatus: res.status})
           }else{
@@ -51,10 +51,10 @@ export const useApplicationStore = create<OnboardingStatusResponse>()(persist((s
             set({pending: false})
         }
     },
-    submitApplication: async(userId,data)=>{
+    submitApplication: async(data,userId)=>{
       set({submitLoader: true})
       try {
-        const res = await submitApplication(userId, data)
+        const { data: res } = await axios.post<any>("/api/onboarding", { action: "submit", data, userId })
         if(res?.success === false){
           toast.error("Something went wrong")
         }
@@ -78,7 +78,7 @@ export const useApplicationStore = create<OnboardingStatusResponse>()(persist((s
       }
       set({checkLoader: true, success:null, message: ""})
       try {
-        const res = await checkAvailability(brand)
+        const { data: res } = await axios.post<any>("/api/onboarding", { action: "availability", brand })
       if(res?.success === true){
         set({success: true, message: ""})
         console.log(res)
@@ -106,7 +106,7 @@ export const useApplicationStore = create<OnboardingStatusResponse>()(persist((s
       set({checkLoader: true})
       try {
        
-         const res = await verifyCode(code)
+         const { data: res } = await axios.post<any>("/api/onboarding", { action: "verify-code", code })
         if(res?.success === false){
            set({success:false, message: res?.message})
         }else{

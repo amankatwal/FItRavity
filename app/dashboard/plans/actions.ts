@@ -1,4 +1,3 @@
-"use server"
 import { addPlanType } from "@/lib/formSchema"
 import prisma from "@/lib/prisma"
 import { toast } from "sonner"
@@ -10,7 +9,7 @@ import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { standardProtection } from "@/lib/security"
 import { redis } from "@/lib/redis"
-import { Plan } from "./clientStore"
+import type { Plan } from "./clientStore"
 
 
 export const fetchPlansByOrgIdAction =async(userId: string)=>{
@@ -300,7 +299,7 @@ const cacheKey = `PlanId:${planId}`
     if(!res){
         return {success: false, message: "Something went wrong"}
     }
-     await redis.set(cacheKey,res)
+     await redis.set(cacheKey,res, {ex:5*60})
     return{
         success: true, data: res
     }
@@ -623,7 +622,7 @@ const planRes = await prisma.plan.update({
             await prisma.$executeRaw`DELETE FROM plan_vector WHERE "planId" = ${planId}`
              await redis.del(`PlanId:${planId}`)
         if(planRes){
-            await redis.set(`PlanId:${planId}`, planRes)
+            await redis.set(`PlanId:${planId}`, planRes,{ex:5*60})
         const vectorResults = []
     const chunks = await createPlanChunks(planRes, planRes.isActive, planRes.id)
     for (let i=0; i < chunks.length; i++){

@@ -26,7 +26,6 @@ import { set } from 'zod';
 import { useApplicationStore } from '@/app/store/applicationStore';
 import { CheckCheck, Loader, Loader2, Search, X } from 'lucide-react';
 import { formCsrfMiddleware } from 'better-auth/api';
-import { checkAvailability } from '../actions';
 import { SuccessButton } from '@/components/ui/SuccessButton';
 
 export default function TrainerForm({userId}: {userId : string}) {

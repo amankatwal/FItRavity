@@ -1,4 +1,3 @@
-"use server"
 import { auth } from "@/lib/auth"
 import { trainerSchema, trainerSchemaType } from "@/lib/formSchema"
 import prisma from "@/lib/prisma"

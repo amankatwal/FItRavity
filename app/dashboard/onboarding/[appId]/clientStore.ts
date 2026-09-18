@@ -1,6 +1,6 @@
 import {create} from "zustand";
 import {toast} from "sonner";
-import { adminName, approveApplicantAction, dryRunAction, fetchApplicationByID, rejectApplicationAction, replaceComment } from "./actions";
+import axios from "axios";
 
 export type Application={
     id: string;
@@ -56,7 +56,7 @@ export const useApplicationReviewStore = create<ApplicationController>((set, get
 getApplicationById : async(appId) =>{
     set({applicationLoader: true})
     try {
-        const res = await fetchApplicationByID(appId);
+        const { data: res } = await axios.post<any>(`/api/admin/applications/${appId}`, { action: "get" });
        
         if(res?.success === false){
         return    toast.error(res.message)
@@ -65,7 +65,7 @@ getApplicationById : async(appId) =>{
           set({data: res?.data})
           const {data} = get();
           if(data?.adminId){
-          const  nameRes = await adminName(data?.adminId);
+          const { data: nameRes } = await axios.post<any>(`/api/admin/applications/${appId}`, { action: "admin-name", adminId: data.adminId });
           set({adminName: nameRes.data?.name})
           }else{
             set({adminName: "N/A"})
@@ -83,7 +83,7 @@ getApplicationById : async(appId) =>{
      return toast.error("Invalid Request")
      }
     try {
-      const res = await dryRunAction(panId);
+      const { data: res } = await axios.post<any>(`/api/admin/applications/${get().data?.id ?? ""}`, { action: "dry-run", panId });
       if(res.success === false && res.data){
         set((state)=>({
           data: state.data ? {
@@ -120,7 +120,7 @@ getApplicationById : async(appId) =>{
       toast.error("Invalid Request")
     }else
     try {
-      const res = await replaceComment(appId, data)
+      const { data: res } = await axios.post<any>(`/api/admin/applications/${appId}`, { action: "comment", comment: data })
       if(res.success){
         
         if(res.data)
@@ -143,7 +143,7 @@ getApplicationById : async(appId) =>{
   createPartner : async(notes)=>{
     const {data} = get()
     try {
-      const res = await approveApplicantAction(data, notes)
+      const { data: res } = await axios.post<any>(`/api/admin/applications/${data?.id ?? ""}`, { action: "approve", data, note: notes })
       if(res?.success === true){
         set((state)=> ({
           data: state.data ? {
@@ -164,7 +164,7 @@ getApplicationById : async(appId) =>{
   rejectApplication : async(notes)=>{
  const {data} = get()
     try {
-      const res = await rejectApplicationAction(data, notes)
+      const { data: res } = await axios.post<any>(`/api/admin/applications/${data?.id ?? ""}`, { action: "reject", data, note: notes })
       if(res?.success === true){
         set((state)=> ({
           data: state.data ? {
