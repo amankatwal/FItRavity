@@ -3,10 +3,10 @@ import Image from 'next/image'
 import Dumbell from "@/public/Dumbell.png"
 import WelcomePlanPage from './__component/WelcomePlanPage'
 import RecomendedPlan from './__component/RecomendedPlan'
+import AllPlans from './__component/AllPlans';
 
 
 export default function ClientPlans() {
- 
   return (
     <div >
             <div className='max-h-[10vh] overflow-hidden relative'>
@@ -15,7 +15,7 @@ export default function ClientPlans() {
             </div>
         <WelcomePlanPage />
            <RecomendedPlan />
- 
+             <AllPlans />
         </div>
   )
 }

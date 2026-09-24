@@ -75,14 +75,12 @@ const {error} = await authClient.signUp.email({
                 email,
                 password,
                 name,
-                callbackURL : "/email-verified"
-            } )
+                callbackURL : "/verify"
+            }, )
              if(error){
                 toast.error(error.message);
-               set({route : "/email-verified"})
         }else{
   toast.success("Signed up Successfully")
-            set({route : "/"})
         }}
         } catch (err) {
             console.log(err)

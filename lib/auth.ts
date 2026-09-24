@@ -255,6 +255,7 @@ export const auth = betterAuth({
   },
   emailVerification:{
     sendOnSignIn : true,
+    sendOnSignUp:true,
     autoSignInAfterVerification : true,
 sendVerificationEmail : async({user, url}) =>{
   await sendEmail({
@@ -269,6 +270,7 @@ sendVerificationEmail : async({user, url}) =>{
      identityStrategy: "provider-id",
     accountLinking : {
       enabled : true,
+      disableImplicitLinking: false,
       trustedProviders: ["google"]
     },
   },

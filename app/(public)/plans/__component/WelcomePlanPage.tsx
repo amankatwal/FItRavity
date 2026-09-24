@@ -1,7 +1,7 @@
 "use client"
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { authClient } from '@/lib/auth-client'
-import { AlertCircleIcon, Loader, Plus, Search, X } from 'lucide-react'
+import { AlertCircleIcon, Loader, Pencil, Plus, Search, X } from 'lucide-react'
 import {
   Dialog,
   DialogClose,
@@ -52,8 +52,8 @@ if(debouncedKeyword){
         fetchInterestLoader ? <div className="flex items-center gap-4">
       <Skeleton className="h-20 w-20 rounded-full" />
       <div className="space-y-2">
-        <Skeleton className="h-4 w-[250px]" />
-        <Skeleton className="h-4 w-[200px]" />
+        <Skeleton className="h-4 w-62.5" />
+        <Skeleton className="h-4 w-50" />
       </div>
     </div> : 
         <div className='relative'>
@@ -63,16 +63,16 @@ if(debouncedKeyword){
           {session ? <div className='flex gap-5'>
             <div>
             
-            <Avatar className="h-20 w-20 rounded-lg">
+            <Avatar className="sm:h-20 sm:w-20 h-12 w-12 rounded-full">
                   <AvatarImage src={session.user.image ??`https://avatar.vercel.sh/${session?.user.email}`} alt={session?.user.name} />
-                  <AvatarFallback className="rounded-full text-card text-3xl bg-card-foreground">{session.user.name.split('')[0]}</AvatarFallback>
+                  <AvatarFallback className="rounded-full text-card sm:text-3xl text:lg bg-card-foreground">{session.user.name.split('')[0]}</AvatarFallback>
                 </Avatar></div>
             <div className='flex flex-col gap-4'>
-            <h1 className='text-xl font-semibold'>Welcome Back, {session?.user?.name.split(' ')[0]}</h1>
+            <h1 className='sm:text-xl text-md font-semibold'>Welcome Back, <span className='text-primary'>{session?.user?.name.split(' ')[0]}</span></h1>
             <div className='flex gap-2 items-center'>
-              <span className='text-xs font-semibold px-2 py-1 border-1 border-primary/50/50/50 bg-primary/20'>
-              {interests[0]}</span>{interests.length>1 &&<span className='text-xs font-semibold px-1 py-1 border-1 border-primary/50/50 bg-primary/20'>+{interests.length-1}</span>}
-            <a className='text-chart-4 text-sm font-bold hover:cursor-pointer flex underline gap-1' onClick={()=> setIsOpen(true)}>Add Interests <Plus size={12} /></a></div>
+             {interests.length > 0 && <span className='text-xs font-semibold px-2 py-1 border border-primary/50/50/50 bg-primary/20'>
+              {interests[0]}</span>}{interests.length>1 &&<span className='text-xs font-semibold px-1 py-1 border border-primary/50/50 bg-primary/20'>+{interests.length-1}</span>}
+            <a className='text-chart-4 text-sm font-bold hover:cursor-pointer flex underline gap-1' onClick={()=> setIsOpen(true)}>{interests.length > 0 ? "Manage interests" : "Add Interests "}<Pencil size={12} /></a></div>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
       
       <DialogContent className="sm:max-w-lg">

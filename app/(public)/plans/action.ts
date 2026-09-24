@@ -43,7 +43,7 @@ export const fetchInterestRecomendationAction = async (keyword: string) => {
 
       ]
     },
-    take: 10,
+    take: 5,
 
     select: {
       name: true,
@@ -114,11 +114,7 @@ export const submitIntrestAction = async (intrests: string[]) => {
   }
 }
 
-export const fetchRecomendationAction = async (userId: string) => {
-  const decision = await standardProtection(userId)
-  if (decision.isDenied()) {
-    return { success: false, message: "Request Blocked, Please try again later" }
-  }
+export const fetchRecomendationAction = async (userId: string, cursor: string| null) => {
   try {
     const interests = await prisma.user.findFirst({
       where: {
@@ -132,6 +128,13 @@ export const fetchRecomendationAction = async (userId: string) => {
       return { success: false, message: "No interets added", data: [] }
     }
     const plans = await prisma.plan.findMany({
+      take: 7, 
+      ...(cursor ? {
+        cursor: {
+          id: cursor,
+        },
+        skip:1,
+      }:{}),
       where: {
         isActive: true,
         OR: interests.interests.flatMap((interest) => [
@@ -182,9 +185,15 @@ export const fetchRecomendationAction = async (userId: string) => {
         id: true,
         name: true,
         offerPrice: true,
+        actualPrice:true,
         currency:true,
+        level:true,
+        duration:true,
         organization: {
-          include: {
+          select: {
+             id: true,
+            name: true,
+            logo: true,
             members: {
               where: {
                 role: "Owner",
@@ -194,18 +203,67 @@ export const fetchRecomendationAction = async (userId: string) => {
               }
             }
           },
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-          }
         }
       },
+      
     })
-    if (plans.length === 0) {
+    const hasMore = plans.length === 7
+    const nextCusror = hasMore ? plans[plans.length -1].id: null
+    const data = hasMore ? plans.slice(0,6) : plans
+    if (data.length === 0) {
       return { success: false, message: "No plans found based on interest", data: [] }
     }
-    return { success: true, message: "Plans found", data: plans }
+    return { success: true, message: "Plans found", data: data, nextCusror, hasMore }
+  } catch (err) {
+    console.log(err)
+    return { success: false, message: "Invalid Request", data: [] }
+  }
+}
+export const fetchAllPlansActions = async(cursor: string | null)=>{
+  try {
+    
+    const plans = await prisma.plan.findMany({
+      take: 13, 
+      ...(cursor ? {
+        cursor: {
+          id: cursor,
+        },
+        skip:1,
+      }:{}),
+      
+      select: {
+        id: true,
+        name: true,
+        offerPrice: true,
+        actualPrice:true,
+        currency:true,
+        level:true,
+        duration:true,
+        organization: {
+          select: {
+             id: true,
+            name: true,
+            logo: true,
+            members: {
+              where: {
+                role: "Owner",
+              },
+              select: {
+                profileImage: true,
+              }
+            }
+          },
+        }
+      },
+      
+    })
+    const hasMore = plans.length === 13
+    const nextCusror = hasMore ? plans[plans.length -1].id: null
+    const data = hasMore ? plans.slice(0,12) : plans
+    if (data.length === 0) {
+      return { success: false, message: "No plans found Active", data: [] }
+    }
+    return { success: true, message: "Plans found", data: data, nextCusror, hasMore }
   } catch (err) {
     console.log(err)
     return { success: false, message: "Invalid Request", data: [] }

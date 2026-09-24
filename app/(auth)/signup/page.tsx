@@ -9,7 +9,7 @@ export default async function SignUpPage() {
     headers : await headers()
   })
  if(session){
-  return redirect("/")
+  return redirect("/verify")
  }
 return <SignUpForm />
 }

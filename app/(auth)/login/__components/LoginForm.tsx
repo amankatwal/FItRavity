@@ -84,7 +84,7 @@ export const LoginForm = () => {
                     </Label>
                    <Checkbox checked={formdata.rememberMe} className="hover:cursor-pointer" onCheckedChange={()=>{setFormdata({...formdata, rememberMe: !formdata.rememberMe})}}></Checkbox></div>
                    <div>
-                    <Button variant="link" typeof="button" className='text-chart-4 hover:cursor-pointer'onClick={()=>router.push("/forgot-password")}>Forgot Password?</Button>
+                    <Button variant="link" type="button" className='text-chart-4 hover:cursor-pointer'onClick={()=>router.push("/forgot-password")}>Forgot Password?</Button>
                    
                    </div>
                    </div>

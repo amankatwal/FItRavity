@@ -26,8 +26,8 @@ export default function SignUpForm(){
     password : "",
     confirmPassword : ""
   })
-  const {signUp, signUpLoader, route} = useAuthStore();
-  const router = useRouter();
+  const {signUp, signUpLoader} = useAuthStore();
+  const router = useRouter()
   return (
     
        <AnimatePresence>
@@ -41,7 +41,7 @@ export default function SignUpForm(){
       mass: 0.8,
     }}>
           <div>
-            <Card className='min-h-svh flex flex-col justify-around max-h-screen'>
+            <Card className='min-h-svh flex flex-col justify-around max-h-screen overflow-y-scroll '>
               <CardHeader>
                 <CardTitle className='text-center lg:text-4xl text-2xl flex flex-col gap-10 font-bold justify-center'>
                   <div className="flex justify-center items-center">
@@ -61,7 +61,7 @@ export default function SignUpForm(){
                 <form className='flex flex-col justify-around' onSubmit={async(e)=> { e.preventDefault(); await signUp(formData.email,
       formData.password,
       formData.name,
-      formData.confirmPassword)}}>{
+      formData.confirmPassword); router.refresh()}}>{
                   step === 1 ? 
                   <motion.div className='flex flex-col lg:px-10 gap-5' initial={{x : 100}} animate={{x: 0}} exit={{x:100}}>
                    <div className='flex flex-col gap-6'>
@@ -82,7 +82,7 @@ export default function SignUpForm(){
                    </Input>
                    
                    </div>
-                   <Button className='text-md mt-10 hover:cursor-pointer' type="button" onClick={()=> {formData.name && formData.email && setStep(2)}}><IoIosMail className='size-6'/> Continue with Email</Button>
+                   
                   </motion.div>:
                   <motion.div className='flex flex-col lg:px-10 gap-5' initial={{x : 100}} animate={{x: 0}} exit={{x:100}}>
                    <div className='flex flex-col gap-6'>
@@ -98,7 +98,7 @@ export default function SignUpForm(){
                     <Label className='lg:text-lg'>
                       Confirm Password
                     </Label>
-                   <Input type='password' required value={formData.confirmPassword} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} placeholder='xyz@example.com' name="confirm-password"  className='px-2 py-4 bg-neutral-200 text-black font-semibold text-sm' size={5}>
+                   <Input type='password' required value={formData.confirmPassword} onChange={async(e) => {await setFormData({...formData, confirmPassword: e.target.value}); router.refresh()}} placeholder='xyz@example.com' name="confirm-password"  className='px-2 py-4 bg-neutral-200 text-black font-semibold text-sm' size={5}>
                    
                    </Input>
                    
@@ -114,6 +114,8 @@ signUpLoader ? <Button className = "disabled hover:cursor-progress" type="button
                    
                   </div>
                 </form>
+                {step === 1 && <AnimatedButton className='text-md mt-10 hover:cursor-pointer w-full' type="button" onClick={()=> {(formData.name && formData.email) && setStep(2)}}><IoIosMail className='size-6'/> Continue with Email</AnimatedButton>}
+                
               </CardContent>
               <CardFooter className='min-h-[30vh] flex-col gap-6 bg-accent py-3 lg:py-10'>
                 <div className='flex flex col text-muted-foreground font-semibold text-sm'>
