@@ -219,17 +219,27 @@ export const fetchRecomendationAction = async (userId: string, cursor: string| n
     return { success: false, message: "Invalid Request", data: [] }
   }
 }
-export const fetchAllPlansActions = async(cursor: string | null)=>{
+export const fetchAllPlansActions = async(cursor: string | null,  excludedPlanIds: string[])=>{
   try {
     
     const plans = await prisma.plan.findMany({
-      take: 13, 
+      take: 9, 
       ...(cursor ? {
         cursor: {
           id: cursor,
         },
         skip:1,
       }:{}),
+      where: {
+         isActive: true,
+          ...(excludedPlanIds.length > 0
+    ? {
+        id: {
+          notIn: excludedPlanIds,
+        },
+      }
+    : {}),
+      },
       
       select: {
         id: true,
@@ -257,9 +267,10 @@ export const fetchAllPlansActions = async(cursor: string | null)=>{
       },
       
     })
-    const hasMore = plans.length === 13
+    const hasMore = plans.length === 9
     const nextCusror = hasMore ? plans[plans.length -1].id: null
-    const data = hasMore ? plans.slice(0,12) : plans
+    const data = hasMore ? plans.slice(0,8) : plans
+    
     if (data.length === 0) {
       return { success: false, message: "No plans found Active", data: [] }
     }

@@ -120,8 +120,8 @@ useEffect(() => {
   }
 
   return (
-    <div className='sm:px-20 py-10 px-3'>
-      <section className='px-3 md:hidden py-10'>
+    <div className='sm:px-20 py-10'>
+      <section className='px-1 md:hidden py-10'>
 <div className='flex flex-col justify-center'>
         <div className="flex items-center justify-between mb-5">
           <h1 className="sm:text-2xl text-lg font-semibold text-chart-3">

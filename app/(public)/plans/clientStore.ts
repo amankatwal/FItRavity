@@ -36,6 +36,7 @@ type PlanRenderStore = {
     fetchMoreRecomendedPlan:(userId:string)=>void,
     fetchAllPlans: ()=> void,
     fetchInterest: ()=>void,
+    fetchMorePlans:()=> void,
     recomendationLoader:Boolean,
     fetchInterestLoader: Boolean,
     submitIntersetLoader:Boolean,
@@ -44,6 +45,7 @@ type PlanRenderStore = {
     haveMore: Boolean,
     fetchMoreRecomendedPlanLoader: boolean
     allPlanLoader: boolean
+    allPlanMoreLoader: boolean
 }
 
 export const usePlansRenderStore = create<PlanRenderStore>((set, get)=>({
@@ -61,6 +63,7 @@ haveMore: false,
 haveMoreAll: false,
 allPlanLoader: false,
 fetchMoreRecomendedPlanLoader: false,
+allPlanMoreLoader: false,
 fetchInterestRecomendation: async(keyword)=>{
   set({ recomendationLoader: true });
     if (!keyword.trim()) {
@@ -150,7 +153,6 @@ set({recomendedPlanLoader: true})
 try {
   const res = await fetchRecomendationAction(userId, null)
   if(res.data && res.data.length > 0){
-    console.log(res.data)
     set({recomendedPlans: res.data, haveMore: res.hasMore ?? false, cursor:res.nextCusror ?? null})
   }
 } catch (err) {
@@ -177,7 +179,7 @@ fetchMoreRecomendedPlan : async(userId)=>{
       set((state) => ({recomendedPlans: [...state.recomendedPlans, ...res.data], haveMore:res.hasMore ?? false, cursor:res.nextCusror}))
     }
   } catch (err) {
-    
+    toast.error("Invalid request")
   }finally{
     set({fetchMoreRecomendedPlanLoader: false})
   }
@@ -185,9 +187,8 @@ fetchMoreRecomendedPlan : async(userId)=>{
 fetchAllPlans : async()=>{
   set({allPlanLoader: true})
 try {
-  const res = await fetchAllPlansActions(null)
+  const res = await fetchAllPlansActions(null, [])
   if(res.data && res.data.length > 0){
-    console.log(res.data)
     set({allPlans: res.data, haveMoreAll: res.hasMore ?? false, cursorAll:res.nextCusror ?? null})
   }
 } catch (err) {
@@ -195,6 +196,27 @@ try {
 }finally{
   set({allPlanLoader: false})
 }
+},
+fetchMorePlans: async()=>{
+  const {haveMoreAll, cursorAll, recomendedPlans} = get()
+  if(!cursorAll){
+    return
+  }
+  if(!haveMoreAll){
+    return
+  }
+  const excludedPlanIds = recomendedPlans.map((plan)=> plan.id)
+  try {
+    const res = await fetchAllPlansActions(cursorAll, excludedPlanIds)
+    
+    if(res.success && res.data){
+      
+      set((state) => ({allPlans: [...state.allPlans, ...res.data], haveMoreAll:res.hasMore ?? false, cursorAll:res.nextCusror}))
+    }
+  } catch (err) {
+    console.log("Invalid Request")
+  }
 }
+
 
 }))

@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import Test2 from "@/public/IMG_20221016_110630.jpg"
 import { Badge } from "@/components/ui/badge"
 import { AnimatedButton } from "@/components/ui/AnimatedButton"
+import Link from "next/link"
 type PlanBoxProps = {
   plan: {
     id: string
@@ -28,7 +29,8 @@ type PlanBoxProps = {
 export default function PlanBox({ plan }: PlanBoxProps) {
   
   return (
-     <div className="flex flex-col gap-2 border-1 border-muted-foreground/20 p-5">
+    <Link href={`/plans/${plan.id}`}>
+     <div className="flex flex-col gap-2 border-1 border-muted-foreground/20 p-5 hover:cursor-pointer">
       <div className="p-3">
       <Image
       className="w-100 h-40 object-cover"
@@ -71,7 +73,7 @@ export default function PlanBox({ plan }: PlanBoxProps) {
   <AnimatedButton className="absolute bottom-0 right-0">Enroll Now</AnimatedButton>
   </div>
       </div>
-    </div>
+    </div></Link>
   )
 }
 
